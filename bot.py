@@ -5,7 +5,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-TELEGRAM_TOKEN = "9108188458:AAFpm_pipwbrok6n9-WO95XX6gFitXSN0E4"
+TELEGRAM_TOKEN = "9108188458:AAFpm_pipwbrok6n9-W095XX6gFitXSNOE4"
 RAPIDAPI_KEY = "1b41bb4863msh3e2bc115ca860d2p152e5cjsn03752bc6a9ad"
 
 headers = {
@@ -17,7 +17,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🎯 Boti i Analizave me Të Dhëna Reale H2H!\n\n"
         "1️⃣ /simulo [Ekipi 1] vs [Ekipi 2]\n"
-        "   *(Tërheq ndeshjet direkte dhe statistikat reale)*\n\n"
+        "   *(Tërheq ndeshjen e ardhshme, datën dhe statistikat H2H)*\n\n"
         "2️⃣ /odds [Odd 1] [Odd X] [Odd 2]\n"
         "   *(Llogarit përqindjet e pastra dhe margjinën)*"
     )
@@ -30,8 +30,8 @@ def get_team_id(team_name):
         if data.get("response"):
             team_info = data["response"][0]["team"]
             return team_info["id"], team_info["name"]
-    except Exception as e:
-        print(T gabim te get_team_id: {e})
+    except Exception:
+        pass
     return None, team_name
 
 async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -43,7 +43,7 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     team1_str, team2_str = query.split("vs")
     name1_query, name2_query = team1_str.strip(), team2_str.strip()
 
-    await update.message.reply_text(f"🔍 Duke kërkuar të dhënat reale për **{name1_query}** dhe **{name2_query}**...", parse_mode="Markdown")
+    await update.message.reply_text(f"🔍 Duke kërkuar ndeshjen e ardhshme dhe statistikat për **{name1_query} vs {name2_query}**...", parse_mode="Markdown")
 
     id1, name1 = get_team_id(name1_query)
     id2, name2 = get_team_id(name2_query)
@@ -55,7 +55,22 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Tërheqim ndeshjet direkte (H2H)
+    # 1. Kërkojmë ndeshjen e ardhshme mes dy ekipeve
+    next_match_date = "E panjohur / S'ka ndeshje të konfirmuar"
+    try:
+        next_url = f"https://api-football-v1.p.rapidapi.com/v3/fixtures?h2h={id1}-{id2}&next=1"
+        next_res = requests.get(next_url, headers=headers, timeout=6).json()
+        next_fixtures = next_res.get("response", [])
+        if next_fixtures:
+            fixture_info = next_fixtures[0]
+            raw_date = fixture_info.get("fixture", {}).get("date", "")
+            if raw_date:
+                # Formatojmë datën që të duket bukur (Data dhe Ora)
+                next_match_date = raw_date.replace("T", " ").replace("+00:00", " UTC")
+    except Exception:
+        pass
+
+    # 2. Tërheqim ndeshjet direkte (H2H) për statistika
     try:
         h2h_url = f"https://api-football-v1.p.rapidapi.com/v3/fixtures/headtohead?h2h={id1}-{id2}"
         res = requests.get(h2h_url, headers=headers, timeout=6).json()
@@ -95,7 +110,6 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         avg_g1 = round(total_g1 / count, 1)
         avg_g2 = round(total_g2 / count, 1)
     else:
-        # Nëse nuk ka ndeshje H2H direkte të regjistruara në databazë
         await update.message.reply_text(f"⚠️ U gjetën skuadrat ({name1} & {name2}), por s'ka mjaftueshëm ndeshje direkte H2H në arkivë.")
         return
 
@@ -105,6 +119,8 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
         f"📊 **ANALIZA E BAZUAR NË H2H REAL**\n"
         f"⚔️ **{name1} vs {name2}**\n\n"
+        f"📅 **Ndeshja e Ardhshme:**\n"
+        f"• `{next_match_date}`\n\n"
         f"📈 **Statistikat e Ndeshjeve Direkte (Fundit {count}):**\n"
         f"• Fitore {name1}: **{p1}%** ({w1} ndeshje)\n"
         f"• Barazime: **{px}%** ({draws} ndeshje)\n"
