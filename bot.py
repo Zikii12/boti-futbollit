@@ -91,19 +91,28 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logging.error(f"Gabim: {e}")
 
-        # Gjejmë përqindje unike sipas pozicionit të ekipeve
+            # Gjenerator i drejtë: Renditja në shkrim nuk favorizon asnjë ekip
     if p1 == 0.0:
-        seed_val = (sum(ord(c) for c in name1) * 3) + sum(ord(c) for c in name2)
+        sorted_teams = sorted([name1.lower(), name2.lower()])
+        seed_val = sum(ord(c) for c in sorted_teams[0]) + sum(ord(c) for c in sorted_teams[1])
         random.seed(seed_val)
         
-        p1 = round(random.uniform(30.0, 62.0), 1)
-        p2 = round(random.uniform(20.0, 45.0), 1)
-        px = round(100.0 - (p1 + p2), 1)
+        val_a = round(random.uniform(32.0, 58.0), 1)
+        val_b = round(random.uniform(20.0, 40.0), 1)
+        draw = round(100.0 - (val_a + val_b), 1)
         
-        if px < 15.0:
-            px = 22.0
-            p1 = round(p1 - 4.0, 1)
+        if draw < 15.0:
+            draw = 20.0
+            val_a = round(val_a - 5.0, 1)
+
+        if name1.lower() == sorted_teams[0]:
+            p1, p2 = val_a, val_b
+        else:
+            p1, p2 = val_b, val_a
+        px = draw
+        
         odds_source = "Analizë e Tregut & H2H (Algoritmike)"
+
 
 
     if p1 > p2 and p1 > px:
