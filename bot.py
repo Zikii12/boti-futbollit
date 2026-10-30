@@ -50,10 +50,12 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Kërkojmë ndeshjen e radhës
             next_res = requests.get(f"https://api-football-v1.p.rapidapi.com/v3/fixtures?h2h={id1}-{id2}&next=1", headers=headers, timeout=3).json()
             fixtures = next_res.get("response", [])
+            logging.info(f"H2H Fixtures response: {fixtures}")
             
             if not fixtures:
                 team_next = requests.get(f"https://api-football-v1.p.rapidapi.com/v3/fixtures?team={id1}&next=1", headers=headers, timeout=3).json()
                 fixtures = team_next.get("response", [])
+                logging.info(f"Team Next Fixtures response: {fixtures}")
 
             if fixtures:
                 fixture_id = fixtures[0]["fixture"]["id"]
