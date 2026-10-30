@@ -17,25 +17,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "⚽ **Boti i Futbollit është Online!**\n\n"
         "Përdor komandën:\n"
-        "• `/simulo [Ekipi 1] vs [Ekipi 2]` - Analizë e ndeshjes dhe koeficientët (1X2)\n\n"
-        "💡 *Shembull:* `/simulo Waregem vs Club Brugge`",
+        "• `/simulo [Ekipi 1] vs [Ekipi 2]` - Analizë e ndeshjes, data, ora dhe koeficientët (1X2)\n\n"
+        "💡 *Shembull:* `/simulo Barcelona vs Alaves`",
         parse_mode="Markdown"
     )
 
 async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.message.text.replace("/simulo", "").strip()
     if "vs" not in query:
-        await update.message.reply_text("⚠️ Format i gabuar! Shkruaj p.sh: `/simulo Waregem vs Club Brugge`", parse_mode="Markdown")
+        await update.message.reply_text("⚠️ Format i gabuar! Shkruaj p.sh: `/simulo Barcelona vs Alaves`", parse_mode="Markdown")
         return
 
     team1_str, team2_str = query.split("vs")
     name1 = team1_str.strip()
     name2 = team2_str.strip()
 
-    # Dërgojmë menjëherë një mesazh që përdoruesi të shohë se boti po punon
-    msg_status = await update.message.reply_text(f"🔍 Duke përpunuar analizën për **{name1} vs {name2}**...", parse_mode="Markdown")
+    msg_status = await update.message.reply_text(f"🔍 Duke kërkuar datën, orën dhe koeficientët për **{name1} vs {name2}**...", parse_mode="Markdown")
 
-    p1, px, p2 = 45.0, 28.0, 27.0
+    p1, px, p2 = 55.0, 25.0, 20.0
     odds_source = "Analizë e Tregut & H2H"
     formatted_date = "📅 **Data:** `Të konfirmohet`\n• ⏰ **Ora:** `Së shpejti`"
 
@@ -48,18 +47,24 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             id1 = r1["response"][0]["team"]["id"]
             id2 = r2["response"][0]["team"]["id"]
             
-            # Gjejmë ndeshjen e radhës
+            # Provojmë fillimisht përmes H2H
             next_res = requests.get(f"https://api-football-v1.p.rapidapi.com/v3/fixtures?h2h={id1}-{id2}&next=1", headers=headers, timeout=3).json()
             fixtures = next_res.get("response", [])
             
+            # Nëse H2H nuk kthen ndeshje të ardhshme, kërkojmë ndeshjen e radhës të ekipit të parë
+            if not fixtures:
+                team_next = requests.get(f"https://api-football-v1.p.rapidapi.com/v3/fixtures?team={id1}&next=1", headers=headers, timeout=3).json()
+                fixtures = team_next.get("response", [])
+
             if fixtures:
                 fixture_id = fixtures[0]["fixture"]["id"]
                 raw_date = fixtures[0]["fixture"].get("date", "")
+                
                 if raw_date:
                     date_part, time_part = raw_date.split("T")
                     formatted_date = f"📅 **Data:** `{date_part}`\n• ⏰ **Ora:** `{time_part[:5]} UTC`"
 
-                # Marrim koeficientët (Odds)
+                # Marrim koeficientët realë (Odds) për këtë ndeshje
                 odds_res = requests.get(f"https://api-football-v1.p.rapidapi.com/v3/odds?fixture={fixture_id}", headers=headers, timeout=3).json()
                 odds_data = odds_res.get("response", [])
                 
@@ -104,7 +109,6 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"ℹ️ *Burimi i të dhënave: {odds_source}*"
     )
     
-    # Përditësojmë mesazhin fillestar me rezultatin përfundimtar
     await msg_status.edit_text(msg, parse_mode="Markdown")
 
 if __name__ == '__main__':
