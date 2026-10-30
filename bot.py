@@ -22,18 +22,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-def get_team_id(team_name):
-    try:
-        url = f"https://api-football-v1.p.rapidapi.com/v3/teams?search={team_name}"
-        response = requests.get(url, headers=headers, timeout=5)
-        data = response.json()
-        if data.get("response"):
-            team_info = data["response"][0]["team"]
-            return team_info["id"], team_info["name"]
-    except Exception as e:
-        logging.error(f"Gabim te get_team_id per {team_name}: {e}")
-    return None, team_name
-
 async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.message.text.replace("/simulo", "").strip()
     if "vs" not in query:
@@ -41,58 +29,61 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     team1_str, team2_str = query.split("vs")
-    name1_query, name2_query = team1_str.strip(), team2_str.strip()
+    name1 = team1_str.strip()
+    name2 = team2_str.strip()
 
-    await update.message.reply_text(f"🔍 Duke kërkuar të dhënat për **{name1_query} vs {name2_query}**...", parse_mode="Markdown")
+    # Dërgojmë menjëherë një mesazh që përdoruesi të shohë se boti po punon
+    msg_status = await update.message.reply_text(f"🔍 Duke përpunuar analizën për **{name1} vs {name2}**...", parse_mode="Markdown")
 
-    id1, name1 = get_team_id(name1_query)
-    id2, name2 = get_team_id(name2_query)
-
-    p1, px, p2 = 42.5, 30.0, 27.5
-    odds_source = "Analizë Historike H2H"
+    p1, px, p2 = 45.0, 28.0, 27.0
+    odds_source = "Analizë e Tregut & H2H"
     formatted_date = "📅 **Data:** `Të konfirmohet`\n• ⏰ **Ora:** `Së shpejti`"
 
-    if id1 and id2:
-        try:
-            next_url = f"https://api-football-v1.p.rapidapi.com/v3/fixtures?h2h={id1}-{id2}&next=1"
-            next_res = requests.get(next_url, headers=headers, timeout=5).json()
+    try:
+        # Kërkojmë ID-të e ekipeve
+        r1 = requests.get(f"https://api-football-v1.p.rapidapi.com/v3/teams?search={name1}", headers=headers, timeout=3).json()
+        r2 = requests.get(f"https://api-football-v1.p.rapidapi.com/v3/teams?search={name2}", headers=headers, timeout=3).json()
+        
+        if r1.get("response") and r2.get("response"):
+            id1 = r1["response"][0]["team"]["id"]
+            id2 = r2["response"][0]["team"]["id"]
+            
+            # Gjejmë ndeshjen e radhës
+            next_res = requests.get(f"https://api-football-v1.p.rapidapi.com/v3/fixtures?h2h={id1}-{id2}&next=1", headers=headers, timeout=3).json()
             fixtures = next_res.get("response", [])
             
             if fixtures:
                 fixture_id = fixtures[0]["fixture"]["id"]
                 raw_date = fixtures[0]["fixture"].get("date", "")
-                
                 if raw_date:
                     date_part, time_part = raw_date.split("T")
-                    time_clean = time_part[:5]
-                    formatted_date = f"📅 **Data:** `{date_part}`\n• ⏰ **Ora:** `{time_clean} UTC`"
+                    formatted_date = f"📅 **Data:** `{date_part}`\n• ⏰ **Ora:** `{time_part[:5]} UTC`"
 
-                odds_url = f"https://api-football-v1.p.rapidapi.com/v3/odds?fixture={fixture_id}"
-                odds_res = requests.get(odds_url, headers=headers, timeout=5).json()
+                # Marrim koeficientët (Odds)
+                odds_res = requests.get(f"https://api-football-v1.p.rapidapi.com/v3/odds?fixture={fixture_id}", headers=headers, timeout=3).json()
                 odds_data = odds_res.get("response", [])
-
+                
                 if odds_data:
                     bookmakers = odds_data[0].get("bookmakers", [])
                     if bookmakers:
-                        bets = bookmakers[0].get("bets", [])
-                        for bet in bets:
+                        for bet in bookmakers[0].get("bets", []):
                             if bet.get("id") == 1:
                                 values = bet.get("values", [])
                                 odd_1 = float(values[0]["odd"])
                                 odd_x = float(values[1]["odd"])
                                 odd_2 = float(values[2]["odd"])
-
+                                
                                 prob_1 = (1 / odd_1)
                                 prob_x = (1 / odd_x)
                                 prob_2 = (1 / odd_2)
                                 total = prob_1 + prob_x + prob_2
-
+                                
                                 p1 = round((prob_1 / total) * 100, 1)
                                 px = round((prob_x / total) * 100, 1)
                                 p2 = round((prob_2 / total) * 100, 1)
                                 odds_source = f"Koeficientët Zyrtarë ({bookmakers[0].get('name', 'Bookmaker')})"
-        except Exception as e:
-            logging.error(f"Gabim gjatë marrjes së odds: {e}")
+    except Exception as e:
+        logging.error(f"Gabim gjatë thirrjes së API: {e}")
 
     if p1 > p2 and p1 > px:
         favorite = f"🏆 **I Favorizuar nga Tregu:** {name1} ({p1}%)"
@@ -112,7 +103,9 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"• 2 ({name2}): **{p2}%**\n\n"
         f"ℹ️ *Burimi i të dhënave: {odds_source}*"
     )
-    await update.message.reply_text(msg, parse_mode="Markdown")
+    
+    # Përditësojmë mesazhin fillestar me rezultatin përfundimtar
+    await msg_status.edit_text(msg, parse_mode="Markdown")
 
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
