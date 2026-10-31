@@ -120,7 +120,7 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         favorite = "🤝 **Parashikimi:** Ndeshje e ekuilibruar, mundësi e lartë për **Barazim (X)**"
   
-    # Llogaritja e treguesve specialë
+       # Llogaritja e treguesve specialë
     random.seed(seed_val + 77)
     btts_val = "Po (Yes)" if random.random() > 0.42 else "Jo (No)"
     goals_val = "Over 2.5 (Mbi 2.5 gola)" if random.random() > 0.38 else "Under 2.5 (Nën 2.5 gola)"
@@ -147,17 +147,7 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"ℹ️ *Burimi: {odds_source}*"
     )
 
-    msg = (
-        f"📊 **ANALIZA E NDESHJES & ORARI**\n"
-        f"⚔️ **{name1} vs {name2}**\n\n"
-        f"{formatted_date}\n\n"
-        f"{favorite}\n\n"
-        f"📈 **Probabiliteti (1X2):**\n"
-        f"• 1 ({name1}): **{p1}%**\n"
-        f"• X (Barazim): **{px}%**\n"
-        f"• 2 ({name2}): **{p2}%**\n\n"
-        f"ℹ️ *Burimi: {odds_source}*"
-    )
+    
     
     await msg_status.edit_text(msg, parse_mode="Markdown")
 
