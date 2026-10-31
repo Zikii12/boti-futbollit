@@ -1,7 +1,7 @@
 import time
 import requests
 
-TOKEN = "9107185721:AAGabfLENoeAd2aMWxwPOF6Vg7vxgeLw7MU"
+TOKEN = "9108188458:AAG6HdFqI1NKpYshRPNQR-C6ej4iX4zJbAc"
 URL = f"https://api.telegram.org/bot{TOKEN}/"
 
 print("Boti i futbollit u ndez!")
