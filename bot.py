@@ -6,7 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-TELEGRAM_TOKEN = "9108188458:AAHkGLSq4y5AHbBAXFnKTKvE4AU59oeznvs"
+TELEGRAM_TOKEN = "9108188458:AAEd2cpetfCa89uDpod9LvnO3ib8HzvDXxY"
 RAPIDAPI_KEY = "1b41bb4863msh3e2bc115ca860d2p152e5cjsn03752bc6a9ad"
 
 headers = {
