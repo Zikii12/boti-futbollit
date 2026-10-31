@@ -134,6 +134,32 @@ async def simulo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         favorite = "🤝 **Parashikimi:** Ndeshje e ekuilibruar, mundësi e lartë për **Barazim (X)**"
   
+    # Llogaritja e treguesve specialë
+    random.seed(seed_val + 77)
+    btts_val = "Po (Yes)" if random.random() > 0.42 else "Jo (No)"
+    goals_val = "Over 2.5 (Mbi 2.5 gola)" if random.random() > 0.38 else "Under 2.5 (Nën 2.5 gola)"
+
+    if abs(p1 - p2) > 15.0:
+        risk_text = "🟢 Risk i Ulët (Favorit i Qartë)"
+    elif px > 24.0:
+        risk_text = "🔴 Risk i Lartë (Kandidat për Barazim)"
+    else:
+        risk_text = "🟡 Risk Mesatar (Ndeshje e Ekuilibruar)"
+
+    msg = (
+        f"📊 **ANALIZA E NDESHJES & ORARI**\n"
+        f"⚔️ **{name1} vs {name2}**\n\n"
+        f"{formatted_date}\n\n"
+        f"{favorite}\n\n"
+        f"📈 **Probabiliteti (1X2):**\n"
+        f"• 1 ({name1}): **{p1}%**\n"
+        f"• X (Barazim): **{px}%**\n"
+        f"• 2 ({name2}): **{p2}%**\n"
+        f"• ⚽ **BTTS (Të dyja shënojnë):** `{btts_val}`\n"
+        f"• 📊 **Golat (Over/Under 2.5):** `{goals_val}`\n"
+        f"• ⚖️ **Vlerësimi i Riskut:** `{risk_text}`\n\n"
+        f"ℹ️ *Burimi: {odds_source}*"
+    )
 
     msg = (
         f"📊 **ANALIZA E NDESHJES & ORARI**\n"
