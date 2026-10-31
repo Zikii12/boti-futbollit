@@ -17,19 +17,34 @@ def main():
                     chat_id = update["message"]["chat"]["id"]
                     text = update["message"]["text"]
                     
-                    if text == "/start" or text == "/ndeshjet":
+                    if text == "/start":
                         mesazhi = (
-                            "⚽ **Përshëndetje! Këtu janë parashikimet për ndeshjet e sotme:**\n\n"
-                            "🏆 *Premier League / Serie A / etj.*\n"
-                            "• Ndeshja 1: 1 & Gola (Parashikim i sugjeruar)\n"
-                            "• Ndeshja 2: X2 & 2+ (Formë e mirë e miqve)\n\n"
-                            "Për më shumë analiza, shkruaj opsionet e tjera!"
+                            "⚽ **Boti i Futbollit është Online!**\n\n"
+                            "Përdor komandën:\n"
+                            "• /ndeshjet - Për të parë ndeshjet e sotme\n"
+                            "• /simulo [Ekipi 1] vs [Ekipi 2] - Analizë e ndeshjes"
                         )
                         requests.get(URL + "sendMessage", params={
                             "chat_id": chat_id, 
                             "text": mesazhi,
                             "parse_mode": "Markdown"
                         })
+                    
+                    elif text == "/ndeshjet":
+                        mesazhi = (
+                            "⚽ **Ndeshjet dhe Parashikimet për Sot:**\n\n"
+                            "🏆 *Premier League*\n"
+                            "• Arsenal vs Chelsea ➡️ **1 & 2+** (Risk i Ulët)\n"
+                            "• Man City vs Liverpool ➡️ **GG & Over 2.5**\n\n"
+                            "🏆 *Serie A*\n"
+                            "• Inter vs Milan ➡️ **1X & Under 3.5**"
+                        )
+                        requests.get(URL + "sendMessage", params={
+                            "chat_id": chat_id, 
+                            "text": mesazhi,
+                            "parse_mode": "Markdown"
+                        })
+                    
                     else:
                         requests.get(URL + "sendMessage", params={
                             "chat_id": chat_id, 
